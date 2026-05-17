@@ -42,6 +42,4 @@ The app connects with the Groq API to generate AI responses and includes feature
 ---
 
 
-```bash
-
 

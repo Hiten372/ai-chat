@@ -15,6 +15,15 @@ app.use(express.json());
 // Serve frontend files
 app.use(express.static("public"));
 
+// Start Server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
+app.get("/", (req, res) => {
+  res.sendFile("index.html", { root: "./public" });
+});
+
 // Chat API Route
 app.post("/api/chat", async (req, res) => {
   try {
@@ -58,7 +67,4 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+export default app;

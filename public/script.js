@@ -4,17 +4,50 @@ document.addEventListener("DOMContentLoaded", () => {
   const userInput = document.getElementById("userInput");
   const chatMessages = document.getElementById("chatMessages");
   const sendButton = document.getElementById("sendButton");
+  const clearChatButton = document.getElementById("clearChat");
 
+  // chat history
+  const savedChats = localStorage.getItem("chatHistory");
+  if (savedChats) {
+    chatMessages.innerHTML = savedChats;
+  }
+  clearChatButton.addEventListener("click", () => {
+    // Remove saved chats
+    localStorage.removeItem("chatHistory");
+
+    // Reset chat UI
+    chatMessages.innerHTML = `
+    <div class="message">
+      <div class="avatar">AI</div>
+      <div class="message-content">
+        Hello! I'm your AI assistant. How can I help you today?
+      </div>
+    </div>
+  `;
+  });
+
+  //user input auto-resize
   userInput.addEventListener("input", () => {
     userInput.style.height = "auto";
     userInput.style.height = userInput.scrollHeight + "px";
   });
-  // Handle form submission
+
+  //   Modern chat apps: Enter → send and Shift + Enter → new line
+  userInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+
+      chatForm.requestSubmit();
+    }
+  });
+
+  //   Handle form submission
   chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const message = userInput.value.trim();
     if (!message) return;
     addMessage(message, true);
+    saveChats();
     userInput.value = "";
     userInput.style.height = "auto";
     sendButton.disabled = true;
@@ -25,9 +58,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await generateResponse(message);
       typingIndicator.remove();
       addMessage(response, false);
+      saveChats();
     } catch (error) {
       typingIndicator.remove();
       addErrorMessage(error.message);
+      saveChats();
     } finally {
       sendButton.disabled = false;
     }
@@ -62,12 +97,28 @@ document.addEventListener("DOMContentLoaded", () => {
   //add user message to chat
   function addMessage(text, isUser) {
     const message = document.createElement("div");
-    message.className = `message ${isUser ? "user-message" : ""}`;
-    message.innerHTML = `<div class="avatar ${isUser ? "user-avatar" : ""}">
-  ${isUser ? "U" : "AI"}</div>
-  <div class="message-content">${text}</div>`;
+    message.classList.add("message");
+
+    if (isUser) {
+      message.classList.add("user-message");
+    }
+
+    // Avatar
+    const avatar = document.createElement("div");
+    avatar.className = `avatar ${isUser ? "user-avatar" : ""}`;
+    avatar.textContent = isUser ? "U" : "AI";
+
+    // Message content
+    const content = document.createElement("div");
+    content.className = "message-content";
+    content.innerHTML = marked.parse(text);
+
+    // Add elements
+    message.appendChild(avatar);
+    message.appendChild(content);
     chatMessages.appendChild(message);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    scrollToBottom();
   }
 
   function showTypingIndicator() {
@@ -80,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class='dot'></div>
     </div>`;
     chatMessages.appendChild(indicator);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    scrollToBottom();
     return indicator;
   }
   //err message function
@@ -90,6 +141,14 @@ document.addEventListener("DOMContentLoaded", () => {
     message.innerHTML = `<div class="avatar">AI</div>
     <div class="message-content" style="color: red;">Error: ${text}</div>`;
     chatMessages.appendChild(message);
+    scrollToBottom();
+  }
+
+  // Scroll to bottom of chat
+  function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 });
+function saveChats() {
+  localStorage.setItem("chatHistory", chatMessages.innerHTML);
+}

@@ -1,30 +1,28 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
 const app = express();
 
-const PORT = 3000;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend files
-app.use(express.static("public"));
+// Serve static files
+app.use(express.static(path.join(__dirname, "public")));
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
+// Homepage route
 app.get("/", (req, res) => {
-  res.sendFile("index.html", { root: "./public" });
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Chat API Route
+// Chat API
 app.post("/api/chat", async (req, res) => {
   try {
     const { message } = req.body;
@@ -53,7 +51,7 @@ app.post("/api/chat", async (req, res) => {
 
     if (!response.ok) {
       return res.status(response.status).json({
-        error: data?.error?.message || "Groq API Error",
+        error: data?.error?.message || "API Error",
       });
     }
 
